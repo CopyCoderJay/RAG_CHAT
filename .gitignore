@@ -1,0 +1,47 @@
+# Environment variables
+.env
+
+.env.local
+
+vercel.json
+
+*.md
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+*.sql
+
+*.pdf
+
+# Streamlit (not used)
+.streamlit/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+.sql
+# OS
+.DS_Store
+Thumbs.db
+
+# Database
+chroma_db/
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.log
+
+.env

@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - RAG Chat Assistant{% endblock %}
+
+{% block content %}
+<style>
+  :root { color-scheme: light dark; }
+  .auth-wrap { padding: 40px 16px; display:flex; justify-content:center; }
+  .auth-card { width: min(560px, 94vw); border-radius: 12px; overflow:hidden; border:1px solid; }
+  .auth-header { padding: 16px 20px; text-align:center; font-weight:700; }
+  .auth-body { padding: 20px; }
+  .auth-btn { width:100%; border:none; border-radius: 9999px; padding: 10px 16px; font-weight:700; color:#fff; background: linear-gradient(90deg, var(--grad-start, #6A5ACD), var(--grad-end, #8A2BE2)); }
+  @media (prefers-color-scheme: light){
+    .auth-card{ background:#ffffff; border-color:#e5e7eb; }
+    .auth-header{ background: linear-gradient(90deg, #6A5ACD, #8A2BE2); color:#fff; }
+    .form-control{ background:#ffffff; color:#0f172a; border-color:#d1d5db; }
+    .form-control::placeholder{ color:#94a3b8; }
+  }
+  @media (prefers-color-scheme: dark){
+    .auth-card{ background:#1e1f24; border-color:#2e2f33; }
+    .auth-header{ background: linear-gradient(90deg, #6A5ACD, #8A2BE2); color:#fff; }
+    .form-control{ background:#121417; color:#e5e7eb; border-color:#2e2f33; }
+    .form-control::placeholder{ color:#9ba3af; }
+  }
+</style>
+<div class="auth-wrap">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h4 style="margin:0">Register</h4>
+        </div>
+        <div class="auth-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label">Username</label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                            <div class="text-danger">{{ form.username.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_email" class="form-label">Email</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <div class="text-danger">{{ form.email.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_password1" class="form-label">Password</label>
+                        {{ form.password1 }}
+                        {% if form.password1.errors %}
+                            <div class="text-danger">{{ form.password1.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_password2" class="form-label">Confirm Password</label>
+                        {{ form.password2 }}
+                        {% if form.password2.errors %}
+                            <div class="text-danger">{{ form.password2.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <button type="submit" class="auth-btn">Sign up</button>
+                </form>
+                <div class="text-center mt-3">
+                    <p>Already have an account? <a href="{% url 'accounts:login' %}">Login here</a></p>
+                </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

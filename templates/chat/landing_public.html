@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Welcome - RAG Chat Assistant{% endblock %}
+
+{% block content %}
+<style>
+  body { background: #0f0f10; color: var(--text-primary); }
+  .landing-wrap { min-height: 100vh; padding: 24px 0 120px; display:flex; flex-direction:column; align-items:center; }
+  .landing-title { font-size: clamp(32px, 5vw, 60px); font-weight: 800; color: #fff; margin: 60px 0 24px 0; text-align:center; }
+  .composer { position: fixed; left:50%; transform: translateX(-50%); bottom: 24px; width: min(1100px, 92vw); }
+  .landing-bar { width: 100%; background: #222326; border: 1px solid #33353a; border-radius: 28px; padding: 18px 18px 16px; box-shadow: 0 12px 34px rgba(0,0,0,0.35); position: relative; }
+  .landing-input-row { display:flex; align-items:center; gap:12px; justify-content:space-between; }
+  .landing-input { flex: 1; background: transparent; border: none; outline: none; color: #eaeaea; font-size: 18px; }
+  /* RAG toggle */
+  .rag-toggle { display:flex; align-items:center; gap:10px; color:#eaeaea; margin-left:12px; }
+  .rag-switch { position: relative; width: 44px; height: 24px; background:#2b2d31; border:1px solid #3a3b3f; border-radius: 9999px; cursor:pointer; }
+  .rag-switch::after { content:''; position:absolute; top:2px; left:2px; width:20px; height:20px; background:#9ca3af; border-radius:9999px; transition: all .2s ease; }
+  #guest-rag:checked + .rag-switch { background: linear-gradient(90deg, var(--grad-start), var(--grad-end)); border-color: transparent; }
+  #guest-rag:checked + .rag-switch::after { left:22px; background:#fff; }
+  /* Remove placeholder badges; enable Grammarly compatibility */
+  .chip-row { display:flex; align-items:center; gap:14px; margin-top: 14px; }
+  .chip { display:flex; align-items:center; gap:10px; color:#eaeaea; background:#2b2d31; border:1px solid #3a3b3f; padding:10px 16px; border-radius: 20px; font-weight:600; font-size:14px; cursor:pointer; outline:none; border-image: initial; }
+  .chip:hover { border-color:#565a61; background:#303239; }
+  .chip:active { transform: translateY(1px); }
+  .btn-login { background: linear-gradient(90deg, var(--grad-start), var(--grad-end)); color:#fff; padding:10px 14px; border-radius:10px; text-decoration:none; font-weight:600; }
+  .btn-signup { background: transparent; color:#eaeaea; border:1px solid #3a3b3f; padding:10px 14px; border-radius:10px; text-decoration:none; font-weight:600; }
+  .landing-hint { margin-top: 12px; color:#9ba3af; font-size: 14px; }
+  .guest-messages { width:min(1100px,92vw); margin:16px auto 0; display:flex; flex-direction:column; gap:10px; padding-bottom:140px; }
+  .guest-msg { color:#eaeaea; background:transparent; border:none; padding:0; border-radius:0; max-width:90%; font-size:18px; line-height:1.5; }
+  .guest-msg.user { align-self:flex-end; background:transparent; }
+</style>
+
+<div class="landing-wrap">
+  <h1 class="landing-title">Ready when you are.</h1>
+  <div class="composer">
+  <div class="landing-bar">
+    <div class="landing-input-row">
+      <textarea class="landing-input" placeholder="Ask anything" rows="1" spellcheck="true" data-gramm="true" data-gramm_editor="true" style="resize:none; overflow:hidden;"></textarea>
+      <div class="rag-toggle">
+        <span style="font-size:14px; opacity:.9;">Use RAG</span>
+        <label style="display:flex; align-items:center; cursor:pointer;">
+          <input type="checkbox" id="guest-rag" style="display:none;">
+          <span class="rag-switch"></span>
+        </label>
+      </div>
+    </div>
+    <div class="chip-row">
+      <button type="button" class="chip" id="chip-attach">📎 Attach</button>
+      <button type="button" class="chip" id="chip-search">🌐 Search</button>
+      <button type="button" class="chip" id="chip-study">📖 Study</button>
+      <button type="button" class="chip" id="chip-voice" style="margin-left:auto;">🎙️ Voice</button>
+    </div>
+    <input type="file" id="guest-file-input" accept=".pdf,.png,.jpg,.jpeg" multiple style="display:none;" />
+    <div id="guest-files-list" class="files-note"></div>
+  </div>
+  <div style="text-align:center; margin-top:8px; color:#9ba3af; font-size:12px;">RAG Chat Assistant can make mistakes. Check important info.</div>
+  </div>
+  <div id="guest-messages" class="guest-messages"></div>
+
+  
+</div>
+<script>
+  (function(){
+    const input = document.querySelector('.landing-input');
+    const fileInput = document.getElementById('guest-file-input');
+    const ragToggle = document.getElementById('guest-rag');
+    const filesList = document.getElementById('guest-files-list');
+    const messagesEl = document.getElementById('guest-messages');
+
+    async function ensureGuestChatId(){
+      let id = sessionStorage.getItem('guest_chat_id');
+      if (id) return id;
+      const res = await fetch('/api/chat/create/', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({title:'Guest Chat'})});
+      const data = await res.json();
+      id = data.id;
+      sessionStorage.setItem('guest_chat_id', id);
+      return id;
+    }
+
+    function appendMessage(role, content){
+      const div = document.createElement('div');
+      div.className = 'guest-msg ' + (role === 'user' ? 'user' : 'assistant');
+      div.textContent = content;
+      messagesEl.appendChild(div);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    // Attach: open file picker (guest preview only)
+    document.getElementById('chip-attach').onclick = () => { ragToggle.checked = true; fileInput.click(); };
+    fileInput.onchange = () => {
+      if (!fileInput.files || fileInput.files.length === 0) return;
+      const names = Array.from(fileInput.files).map(f => f.name).join(', ');
+      if (!names) return;
+      filesList.textContent = `Selected: ${names}. Log in to upload and use RAG.`;
+    };
+
+    // Search: open Google in new tab using current input
+    document.getElementById('chip-search').onclick = () => {
+      const q = (input.value || '').trim();
+      if (!q) { input.focus(); return; }
+      window.open(`https://www.google.com/search?q=${encodeURIComponent(q)}`,'_blank');
+    };
+
+    // Study: open Wikipedia search/new tab
+    document.getElementById('chip-study').onclick = () => {
+      const q = (input.value || '').trim();
+      const url = q ? `https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(q)}` : 'https://en.wikipedia.org/';
+      window.open(url, '_blank');
+    };
+
+    // Voice: fill input using Web Speech API
+    document.getElementById('chip-voice').onclick = async () => {
+      try {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) { alert('Voice not supported in this browser'); return; }
+        const r = new SpeechRecognition();
+        r.lang = 'en-US';
+        r.onresult = (e) => { const txt = e.results[0][0].transcript; input.value = txt; input.focus(); };
+        r.start();
+      } catch (e) { console.error(e); }
+    };
+    // On Enter send as guest using session-bound chat
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        const q = (input.value || '').trim();
+        if (!q) return;
+        (async () => {
+          const chatId = await ensureGuestChatId();
+          appendMessage('user', q);
+          input.value='';
+          const res = await fetch('/api/chat/send-message/', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({chat_id: chatId, message: q, use_rag: ragToggle.checked})});
+          const data = await res.json();
+          if (data && data.response) appendMessage('assistant', data.response); else appendMessage('assistant', data.error || 'Error retrieving response');
+        })();
+      }
+    });
+  })();
+</script>
+{% endblock %}
+
+

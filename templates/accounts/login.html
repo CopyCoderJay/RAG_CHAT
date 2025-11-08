@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - RAG Chat Assistant{% endblock %}
+
+{% block content %}
+<style>
+  :root { color-scheme: light dark; }
+  .auth-wrap { padding: 40px 16px; display:flex; justify-content:center; }
+  .auth-card { width: min(560px, 94vw); border-radius: 12px; overflow:hidden; border:1px solid; }
+  .auth-header { padding: 16px 20px; text-align:center; font-weight:700; }
+  .auth-body { padding: 20px; }
+  .auth-btn { width:100%; border:none; border-radius: 9999px; padding: 10px 16px; font-weight:700; color:#fff; background: linear-gradient(90deg, var(--grad-start, #6A5ACD), var(--grad-end, #8A2BE2)); }
+  @media (prefers-color-scheme: light){
+    .auth-card{ background:#ffffff; border-color:#e5e7eb; }
+    .auth-header{ background: linear-gradient(90deg, #6A5ACD, #8A2BE2); color:#fff; }
+    .form-control{ background:#ffffff; color:#0f172a; border-color:#d1d5db; }
+    .form-control::placeholder{ color:#94a3b8; }
+  }
+  @media (prefers-color-scheme: dark){
+    .auth-card{ background:#1e1f24; border-color:#2e2f33; }
+    .auth-header{ background: linear-gradient(90deg, #6A5ACD, #8A2BE2); color:#fff; }
+    .form-control{ background:#121417; color:#e5e7eb; border-color:#2e2f33; }
+    .form-control::placeholder{ color:#9ba3af; }
+  }
+</style>
+<div class="auth-wrap">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h4 style="margin:0">Login</h4>
+        </div>
+            <div class="auth-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="auth-btn">Log in</button>
+                </form>
+                <div class="text-center mt-3">
+                    <p>Don't have an account? <a href="{% url 'accounts:register' %}">Register here</a></p>
+                </div>
+            </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,363 @@
+/* Custom styles for RAG Chat Assistant */
+
+/* Navbar brand wrapper and tagline */
+.navbar-brand-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.navbar-tagline {
+    font-size: 13px;
+    color: #888;
+    margin: 0;
+    font-weight: 400;
+    line-height: 1.4;
+}
+
+/* Chat container styling */
+.chat-container {
+    height: 500px;
+    overflow-y: auto;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* Message bubbles */
+.message-bubble {
+    border-radius: 20px;
+    position: relative;
+    word-wrap: break-word;
+    line-height: 1.4;
+}
+
+.user-bubble {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-bottom-right-radius: 5px;
+}
+
+.assistant-bubble {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    border-bottom-left-radius: 5px;
+}
+
+/* Message content styling */
+.message-content {
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.message-content h3, .message-content h4, .message-content h5 {
+    color: white !important;
+    font-weight: bold;
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+
+.message-content strong {
+    color: #fff;
+    font-weight: 600;
+}
+
+.message-content ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.message-content li {
+    margin-bottom: 8px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Sources styling */
+.sources {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    margin-top: 10px;
+}
+
+.sources .badge {
+    background: rgba(255, 255, 255, 0.3) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* Chat list styling */
+.chat-item {
+    transition: all 0.3s ease;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 10px;
+    background: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.chat-item:hover {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.chat-item.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+/* Chat title styling */
+.chat-title {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.chat-title:hover {
+    color: #667eea !important;
+}
+
+.chat-title:hover .fas.fa-edit {
+    opacity: 1 !important;
+    color: #667eea !important;
+}
+
+.chat-title .fas.fa-edit {
+    transition: all 0.2s ease;
+}
+
+/* Inline editing styles */
+.chat-title input {
+    border: 2px solid #667eea !important;
+    border-radius: 5px;
+    padding: 2px 8px;
+    font-size: 0.9em;
+    font-weight: 600;
+    background: white;
+    box-shadow: 0 2px 5px rgba(102, 126, 234, 0.3);
+}
+
+.chat-title input:focus {
+    outline: none;
+    border-color: #764ba2 !important;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Card styling */
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px 15px 0 0 !important;
+    border: none;
+    padding: 20px;
+}
+
+/* Button styling */
+.btn {
+    border-radius: 25px;
+    padding: 10px 20px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+}
+
+.btn-outline-primary {
+    border: 2px solid #667eea;
+    color: #667eea;
+}
+
+.btn-outline-primary:hover {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: transparent;
+}
+
+/* Form controls */
+.form-control {
+    border-radius: 25px;
+    border: 2px solid #e9ecef;
+    padding: 12px 20px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* PDF viewer modal */
+.modal-content {
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px 15px 0 0;
+    border: none;
+}
+
+/* PDF content styling */
+.pdf-text-content {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.chunk {
+    background: #f8f9fa;
+    border-left: 4px solid #667eea;
+    transition: all 0.3s ease;
+}
+
+.chunk:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+}
+
+/* Loading animation */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.loading {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .chat-container {
+        height: 400px;
+    }
+    
+    .message-bubble {
+        max-width: 95% !important;
+    }
+    
+    .chat-item {
+        padding: 10px;
+    }
+}
+
+/* Scrollbar styling */
+.chat-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.chat-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.chat-container::-webkit-scrollbar-thumb {
+    background: rgba(102, 126, 234, 0.5);
+    border-radius: 10px;
+}
+
+.chat-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(102, 126, 234, 0.7);
+}
+
+/* Alert styling */
+.alert {
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+/* Badge styling */
+.badge {
+    border-radius: 15px;
+    padding: 5px 10px;
+    font-size: 0.8em;
+}
+
+/* Input group styling */
+.input-group .btn {
+    border-radius: 0 25px 25px 0;
+    border-left: none;
+}
+
+.input-group .form-control {
+    border-radius: 25px 0 0 25px;
+    border-right: none;
+}
+
+/* PDF upload button styling */
+#upload-pdf-btn {
+    transition: all 0.3s ease;
+}
+
+#upload-pdf-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* RAG checkbox styling */
+#use-rag {
+    transform: scale(1.1);
+}
+
+#use-rag:checked + label {
+    color: #667eea;
+    font-weight: 600;
+}
+
+/* Custom animations */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.message {
+    animation: slideIn 0.3s ease-out;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .chat-container {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    }
+    
+    .card {
+        background: #2c3e50;
+        color: white;
+    }
+    
+    .chat-item {
+        background: #34495e;
+        color: white;
+    }
+}

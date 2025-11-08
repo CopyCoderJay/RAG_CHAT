@@ -1,0 +1,2 @@
+# Documents app initialization
+
