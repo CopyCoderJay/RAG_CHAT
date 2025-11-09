@@ -1,153 +1,193 @@
 import logging
+from typing import List, Optional, Sequence
 
+import requests
 from django.conf import settings
-from huggingface_hub import InferenceClient
 
 logger = logging.getLogger(__name__)
 
+
 class AIService:
-    """Service for AI interactions using Hugging Face"""
-    
+    """Service for AI interactions using the Hugging Face Router API."""
+
     def __init__(self):
-        self.hf_token = settings.HF_TOKEN
-        self.model = settings.MODEL
-        try:
-            self.llm_client = InferenceClient(model=self.model, token=self.hf_token)
-        except Exception as e:
-            logger.exception("Failed to initialize LLM client: %s", e)
-            self.llm_client = None
-    
-    def generate_response(self, message, conversation_history=None):
-        """Generate AI response using Hugging Face InferenceClient"""
-        try:
-            if not self.llm_client:
-                logger.warning("LLM client not available; using fallback response")
-                return self._generate_fallback_response(message, conversation_history)
-            
-            # Build conversation context
-            if conversation_history:
-                context = self._build_context(conversation_history)
-                prompt = f"{context}\n\nHuman: {message}\n\nAssistant:"
-            else:
-                prompt = f"Human: {message}\n\nAssistant:"
-            
-            logger.debug("Generating AI response for prompt: %s", message[:100])
-            
-            # Try chat_completion first
-            try:
-                resp = self.llm_client.chat_completion(
-                    model=self.model, 
-                    messages=[{"role": "user", "content": prompt}],
-                    max_tokens=2000, 
-                    temperature=0.4, 
-                    stream=False
-                )
-                # Extract response from chat completion
-                if hasattr(resp, 'choices') and len(resp.choices) > 0:
-                    response = resp.choices[0].message.content
-                    logger.debug("AI generated response: %s", response[:100])
-                    return response
-                else:
-                    logger.warning("Unexpected response format from chat_completion: %s", resp)
-                    return str(resp)
-            except Exception as e:
-                logger.warning("Chat completion failed: %s. Falling back to text_generation.", e)
-                try:
-                    # Fallback to text_generation
-                    gen = self.llm_client.text_generation(
-                        prompt, 
-                        max_new_tokens=2000, 
-                        temperature=0.4
-                    )
-                    response = gen if isinstance(gen, str) else str(gen)
-                    logger.debug("AI generated response via text_generation: %s", response[:100])
-                    return response
-                except Exception as e2:
-                    logger.error("Text generation failed: %s", e2)
-                    # Final fallback - return a helpful message with some intelligence
-                    return self._generate_fallback_response(message, conversation_history)
-                
-        except Exception as e:
-            logger.exception("Error generating AI response: %s", e)
-            return f"Sorry, I encountered an error: {str(e)}"
-    
-    def _build_context(self, conversation_history):
-        """Build conversation context from history"""
-        context = "You are a helpful AI assistant. Here's our conversation so far:\n\n"
-        for msg in conversation_history[-6:]:  # Last 6 messages for context
-            role = "Human" if msg['role'] == 'user' else "Assistant"
-            context += f"{role}: {msg['content']}\n"
-        return context
-    
-    def _generate_fallback_response(self, message, conversation_history):
-        """Generate a simple fallback response when AI service is down"""
-        message_lower = message.lower()
-        
-        # Check if this is about uploaded documents
-        if any(word in message_lower for word in ['name', 'candidate', 'pdf', 'document', 'file']):
-            return (
-                "I can access the documents you've uploaded, but my primary language model is temporarily unavailable. "
-                "Please try again in a moment so I can analyze your files and share detailed findings."
-            )
-        
-        # Simple pattern matching for common questions
-        elif any(word in message_lower for word in ['hello', 'hi', 'hey', 'greetings']):
-            return "Hello! I'm a RAG Chat Assistant. I can see you have uploaded documents, but I'm currently experiencing some technical difficulties with my AI service. I'm here to help once the service is restored!"
-        
-        elif any(word in message_lower for word in ['how are you', 'how do you do']):
-            return "I'm doing well, thank you for asking! I'm a helpful AI assistant, though I'm currently running on backup systems due to some technical issues with my main AI service."
-        
-        elif any(word in message_lower for word in ['what can you do', 'help', 'assist']):
-            return "I'm a RAG (Retrieval-Augmented Generation) Chat Assistant! I can help you analyze uploaded PDF documents and answer questions about their content. I'm currently running on backup systems, but I'm still here to help!"
-        
-        elif any(word in message_lower for word in ['thank', 'thanks']):
-            return "You're very welcome! I'm happy to help. Is there anything else you'd like to know or discuss?"
-        
+        self.hf_token: Optional[str] = settings.HF_TOKEN
+        self.model: str = settings.MODEL
+        self.timeout: int = getattr(settings, "HF_TIMEOUT", 90)
+        self.base_url: str = getattr(
+            settings,
+            "HF_API_URL",
+            "https://router.huggingface.co/hf-inference",
+        ).rstrip("/")
+        self.chat_url: str = f"{self.base_url}/v1/chat/completions"
+        self.embedding_url: str = f"{self.base_url}/v1/embeddings"
+
+        self.session = requests.Session()
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        }
+        if self.hf_token:
+            headers["Authorization"] = f"Bearer {self.hf_token}"
         else:
-            return (
-                "I understand you're asking about this topic, and I'll be ready to help as soon as my language model is back online. "
-                "Feel free to upload documents or add more context in the meantime."
-            )
-    
-    def generate_embedding(self, text):
-        """Generate embedding for text using Hugging Face"""
+            logger.warning("HF_TOKEN is not configured; responses will use fallback messaging.")
+        self.session.headers.update(headers)
+
+    # --------------------------------------------------------------------- #
+    # Chat completion
+    # --------------------------------------------------------------------- #
+    def generate_response(self, message: str, conversation_history: Optional[Sequence[dict]] = None) -> str:
+        """Generate an AI response, falling back to canned text on failure."""
+        if not self.hf_token:
+            return self._generate_fallback_response(message, conversation_history)
+
+        payload = {
+            "model": self.model,
+            "messages": self._build_messages(message, conversation_history),
+            "max_tokens": 900,
+            "temperature": 0.4,
+        }
+
         try:
-            # Use the embedding client
-            from huggingface_hub import InferenceClient
-            emb_client = InferenceClient(
-                model="sentence-transformers/all-mpnet-base-v2", 
-                token=self.hf_token
+            logger.debug("Sending chat completion request to Hugging Face router.")
+            response = self.session.post(self.chat_url, json=payload, timeout=self.timeout)
+            response.raise_for_status()
+            data = response.json()
+            choices = data.get("choices", [])
+            if not choices:
+                logger.warning("Chat completion response missing choices: %s", data)
+                return self._generate_fallback_response(message, conversation_history)
+
+            content = (
+                choices[0]
+                .get("message", {})
+                .get("content", "")
             )
-            embedding = emb_client.feature_extraction(text)
-            return embedding.tolist()
-        except Exception as e:
-            logger.warning("Embedding generation failed: %s", e)
-            # Return zero vector as fallback
+            if not content:
+                logger.warning("Chat completion choice missing content: %s", choices[0])
+                return self._generate_fallback_response(message, conversation_history)
+
+            logger.debug("AI generated response length=%s", len(content))
+            return content.strip()
+
+        except requests.HTTPError as http_error:
+            logger.error(
+                "Hugging Face router returned HTTP error %s: %s",
+                http_error.response.status_code if http_error.response else "unknown",
+                http_error,
+            )
+        except Exception as exc:
+            logger.exception("Unexpected error during chat completion: %s", exc)
+
+        return self._generate_fallback_response(message, conversation_history)
+
+    def _build_messages(self, current_message: str, conversation_history: Optional[Sequence[dict]]) -> List[dict]:
+        messages: List[dict] = [
+            {
+                "role": "system",
+                "content": "You are a helpful AI assistant. Respond concisely and clearly.",
+            }
+        ]
+
+        if conversation_history:
+            for msg in conversation_history[-6:]:
+                role = "user" if msg.get("role") == "user" else "assistant"
+                content = msg.get("content", "")
+                if content:
+                    messages.append({"role": role, "content": content})
+
+        messages.append({"role": "user", "content": current_message})
+        return messages
+
+    # --------------------------------------------------------------------- #
+    # Fallback responses
+    # --------------------------------------------------------------------- #
+    def _generate_fallback_response(self, message: str, conversation_history: Optional[Sequence[dict]]) -> str:
+        """Generate an informative fallback reply when we cannot reach the LLM."""
+        message_lower = message.lower()
+
+        if any(word in message_lower for word in ["pdf", "document", "file", "upload"]):
+            return (
+                "I can access the documents you've uploaded, but the language model is temporarily unavailable. "
+                "Please try again in a few moments so I can analyse the content and share the details with you."
+            )
+
+        if any(word in message_lower for word in ["hello", "hi", "hey", "greetings"]):
+            return (
+                "Hello! I'm standing by to help, but my main language model is currently unavailable. "
+                "Feel free to upload documents or share more context, and I'll respond once the service is restored."
+            )
+
+        if any(word in message_lower for word in ["thank", "thanks"]):
+            return "You're very welcome! Let me know if there's anything else you need once the AI service is back."
+
+        return (
+            "I'm ready to help with that as soon as the language model is back online. "
+            "Please retry in a moment, or provide any additional context you'd like me to consider."
+        )
+
+    # --------------------------------------------------------------------- #
+    # Embeddings
+    # --------------------------------------------------------------------- #
+    def generate_embedding(self, text: str) -> List[float]:
+        """Generate embeddings using the Hugging Face router API."""
+        if not text.strip():
             return [0.0] * 768
-    
-    def retrieve_documents(self, query, top_k=3, chat_id=None):
-        """Retrieve relevant documents using Pinecone for RAG"""
+
+        if not self.hf_token:
+            logger.warning("Embedding requested but HF token is missing. Returning zero vector.")
+            return [0.0] * 768
+
+        payload = {
+            "model": "sentence-transformers/all-mpnet-base-v2",
+            "input": text,
+        }
+
+        try:
+            response = self.session.post(self.embedding_url, json=payload, timeout=self.timeout)
+            response.raise_for_status()
+            data = response.json()
+            embedding = (
+                data.get("data", [{}])[0]
+                .get("embedding")
+            )
+            if embedding:
+                return embedding
+        except requests.HTTPError as http_error:
+            logger.error(
+                "Embedding request failed with HTTP %s: %s",
+                http_error.response.status_code if http_error.response else "unknown",
+                http_error,
+            )
+        except Exception as exc:
+            logger.exception("Unexpected error during embedding generation: %s", exc)
+
+        logger.warning("Falling back to zero vector for embedding.")
+        return [0.0] * 768
+
+    # --------------------------------------------------------------------- #
+    # Retrieval helpers (unchanged logic)
+    # --------------------------------------------------------------------- #
+    def retrieve_documents(self, query: str, top_k: int = 3, chat_id: Optional[str] = None) -> List[dict]:
+        """Retrieve relevant document chunks using Pinecone with database fallback."""
         try:
             from .pinecone_service import PineconeService
+
             pinecone_service = PineconeService()
-            
+
             logger.debug("RAG query: %s", query)
             if chat_id:
                 logger.debug("RAG filtering for chat: %s", chat_id)
-            
-            # First try Pinecone
-            sources = []
+
+            sources: List[dict] = []
             if pinecone_service.index:
                 try:
-                    # Generate query embedding
                     query_embedding = self.generate_embedding(query)
                     logger.debug("RAG query embedding length: %s", len(query_embedding))
-                    
-                    # Search in Pinecone
+
                     results = pinecone_service.query_vectors(query_embedding, top_k)
                     logger.debug("RAG Pinecone returned %s results", len(results))
-                    
-                    # Format results
+
                     for i, match in enumerate(results):
                         logger.debug(
                             "RAG processing match %s score %s metadata keys %s",
@@ -155,69 +195,59 @@ class AIService:
                             getattr(match, "score", None),
                             list(getattr(match, "metadata", {}).keys()),
                         )
-                        
-                        # Filter by chat_id if provided
-                        if chat_id and match.metadata.get('chat_id') != chat_id:
+
+                        if chat_id and match.metadata.get("chat_id") != chat_id:
                             logger.debug(
                                 "RAG skipping match %s due to chat mismatch (%s)",
                                 i + 1,
-                                match.metadata.get('chat_id'),
+                                match.metadata.get("chat_id"),
                             )
                             continue
-                        
-                        # Get the full text from metadata or from database
-                        text_content = match.metadata.get('text', '')
+
+                        text_content = match.metadata.get("text", "")
                         if not text_content:
-                            # Try to get from database if not in metadata
                             try:
                                 from apps.documents.models import DocumentChunk
-                                chunk_id = match.metadata.get('chunk_id', 0)
-                                pdf_id = match.metadata.get('pdf_id')
-                                logger.debug(
-                                    "RAG looking up chunk %s in document %s", chunk_id, pdf_id
-                                )
+
+                                chunk_id = match.metadata.get("chunk_id", 0)
+                                pdf_id = match.metadata.get("pdf_id")
+                                logger.debug("RAG looking up chunk %s in document %s", chunk_id, pdf_id)
                                 if pdf_id:
                                     chunk = DocumentChunk.objects.filter(
                                         document_id=pdf_id,
-                                        chunk_id=chunk_id
+                                        chunk_id=chunk_id,
                                     ).first()
                                     if chunk:
                                         text_content = chunk.content
-                                        logger.debug(
-                                            "RAG retrieved chunk content length %s", len(text_content)
-                                        )
-                                    else:
-                                        logger.debug("RAG chunk not found in database")
-                            except Exception as e:
-                                logger.warning("Error retrieving chunk content: %s", e)
-                        
-                        # Only add if we have actual content
-                        if text_content and len(text_content.strip()) > 0:
-                            sources.append({
-                                'text': text_content,
-                                'page': match.metadata.get('page', 0),
-                                'score': match.score
-                            })
+                                        logger.debug("RAG retrieved chunk content length %s", len(text_content))
+                            except Exception as exc:
+                                logger.warning("Error retrieving chunk content: %s", exc)
+
+                        if text_content and text_content.strip():
+                            sources.append(
+                                {
+                                    "text": text_content,
+                                    "page": match.metadata.get("page", 0),
+                                    "score": match.score,
+                                }
+                            )
                             logger.debug(
                                 "RAG added source %s with length %s",
                                 len(sources),
                                 len(text_content),
                             )
-                        else:
-                            logger.debug("RAG skipping empty source %s", i + 1)
-                except Exception as e:
-                    logger.exception("Pinecone query failed: %s", e)
+                except Exception as exc:
+                    logger.exception("Pinecone query failed: %s", exc)
             else:
                 logger.info("RAG Pinecone index not available")
-            
-            # If no sources from Pinecone, try database fallback
+
+            # Database fallback
             if not sources and chat_id:
                 logger.info("RAG no Pinecone sources; trying database fallback")
                 try:
-                    from apps.documents.models import Document, DocumentChunk
                     from apps.chat.models import Chat
-                    
-                    # Get chat and its documents
+                    from apps.documents.models import Document, DocumentChunk
+
                     chat = Chat.objects.get(external_id=chat_id)
                     documents = Document.objects.filter(chat=chat)
                     logger.debug(
@@ -225,44 +255,42 @@ class AIService:
                         documents.count(),
                         chat_id,
                     )
-                    
-                    # Get all chunks from these documents
+
                     chunks = DocumentChunk.objects.filter(document__in=documents)
                     logger.debug("RAG database fallback found %s chunks", chunks.count())
-                    
-                    # Simple text matching fallback
+
                     query_words = query.lower().split()
-                    for chunk in chunks[:top_k]:  # Limit to top_k chunks
+                    for chunk in chunks[:top_k]:
                         content_lower = chunk.content.lower()
-                        # Check if any query words are in the content
                         if any(word in content_lower for word in query_words):
-                            sources.append({
-                                'text': chunk.content,
-                                'page': chunk.page_number,
-                                'score': 0.8  # Default score for database fallback
-                            })
+                            sources.append(
+                                {
+                                    "text": chunk.content,
+                                    "page": chunk.page_number,
+                                    "score": 0.8,
+                                }
+                            )
                             logger.debug(
                                 "RAG database fallback added source length %s", len(chunk.content)
                             )
-                    
-                    # If still no sources, just take the first few chunks
+
                     if not sources:
                         logger.info("RAG database fallback using first available chunks")
                         for chunk in chunks[:top_k]:
-                            sources.append({
-                                'text': chunk.content,
-                                'page': chunk.page_number,
-                                'score': 0.5  # Lower score for non-matching chunks
-                            })
-                            logger.debug(
-                                "RAG fallback added chunk length %s", len(chunk.content)
+                            sources.append(
+                                {
+                                    "text": chunk.content,
+                                    "page": chunk.page_number,
+                                    "score": 0.5,
+                                }
                             )
-                            
-                except Exception as e:
-                    logger.exception("RAG database fallback failed: %s", e)
-            
+                except Exception as exc:
+                    logger.exception("RAG database fallback failed: %s", exc)
+
             logger.debug("RAG returning %s sources", len(sources))
             return sources
-        except Exception as e:
-            logger.exception("Document retrieval failed: %s", e)
+
+        except Exception as exc:
+            logger.exception("Document retrieval failed: %s", exc)
             return []
+
