@@ -140,14 +140,6 @@
                 <path d="M13 18l6-6-6-6M5 18l6-6-6-6"/>
             </svg>
         </button>
-        <div class="chat-header">
-            <div class="chat-title-section">
-                <div class="chat-title-floating">
-                    <h1 id="chat-title">RAG Chat Assistant</h1>
-                </div>
-            </div>
-        </div>
-        
         <div class="chat-content">
             <!-- Uploaded PDFs Section with Drag & Drop -->
             <div id="uploaded-pdfs" class="upload-pdf-container" style="display: none;">
@@ -629,7 +621,6 @@ function createNewChat() {
     if (uploadContainer) {
         uploadContainer.classList.toggle('collapsed', !uploadSectionExpanded);
     }
-        document.getElementById('chat-title').textContent = 'RAG Chat Assistant';
         document.getElementById('message-input').disabled = false;
         document.getElementById('send-btn').disabled = false;
         // Hide welcome screen
