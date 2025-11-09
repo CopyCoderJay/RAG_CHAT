@@ -261,6 +261,7 @@
 <script>
 let currentChatId = null;
 let activeDocuments = [];
+let pendingAttachmentDocs = [];
 
 const uploadProgress = (() => {
     const wrapper = document.getElementById('upload-progress');
@@ -590,6 +591,9 @@ function createNewChat() {
     function loadChat(chatId) {
         console.log('Loading chat:', chatId);
         currentChatId = chatId;
+    pendingAttachmentDocs = [];
+    activeDocuments = [];
+    renderActiveDocuments();
         document.getElementById('chat-title').textContent = 'RAG Chat Assistant';
         document.getElementById('message-input').disabled = false;
         document.getElementById('send-btn').disabled = false;
@@ -644,7 +648,7 @@ function createNewChat() {
     });
     
     // Load uploaded PDFs
-    loadUploadedPDFs(chatId);
+    loadUploadedPDFs(chatId, { suppressPending: true });
 }
 
 function sendMessage() {
@@ -721,10 +725,12 @@ function addMessageToChat(role, content, sources = []) {
     let sourcesHtml = '';
     
     let attachmentsHtml = '';
-    if (role === 'user' && Array.isArray(activeDocuments) && activeDocuments.length > 0) {
+    let attachmentsUsed = [];
+    if (role === 'user' && Array.isArray(pendingAttachmentDocs) && pendingAttachmentDocs.length > 0) {
+        attachmentsUsed = [...pendingAttachmentDocs];
         attachmentsHtml = `
             <div class="message-attachments">
-                ${activeDocuments.map(doc => `
+                ${attachmentsUsed.map(doc => `
                     <span class="message-attachment">
                         <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                             <path d="M14 2H2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1zM1 3a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V3z" fill="currentColor"/>
@@ -747,6 +753,12 @@ function addMessageToChat(role, content, sources = []) {
     
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    if (role === 'user' && attachmentsUsed.length > 0) {
+        pendingAttachmentDocs = pendingAttachmentDocs.filter(
+            doc => !attachmentsUsed.some(used => used.id === doc.id)
+        );
+    }
 }
 
 function formatMessageContent(content) {
@@ -1277,9 +1289,12 @@ function uploadFileToChat(file) {
         }
     });
 
-    function loadUploadedPDFs(chatId) {
+function loadUploadedPDFs(chatId, options = {}) {
+    const { suppressPending = false } = options;
+    const previousDocuments = Array.isArray(activeDocuments) ? [...activeDocuments] : [];
         if (!chatId) {
             activeDocuments = [];
+        pendingAttachmentDocs = [];
             renderActiveDocuments();
             const list = document.getElementById('pdf-list');
             if (list) {
@@ -1291,14 +1306,28 @@ function uploadFileToChat(file) {
         fetch(`/documents/api/chat/${chatId}/documents/`)
         .then(response => response.json())
         .then(documents => {
-            activeDocuments = Array.isArray(documents) ? documents : [];
+        const docsArray = Array.isArray(documents) ? documents : [];
+        const currentIds = new Set(docsArray.map(doc => doc.id));
+        pendingAttachmentDocs = pendingAttachmentDocs.filter(doc => currentIds.has(doc.id));
+
+        const previousIds = new Set(previousDocuments.map(doc => doc.id));
+        const pendingIds = new Set(pendingAttachmentDocs.map(doc => doc.id));
+        if (!suppressPending) {
+            docsArray.forEach(doc => {
+                if (!previousIds.has(doc.id) && !pendingIds.has(doc.id)) {
+                    pendingAttachmentDocs.push(doc);
+                }
+            });
+        }
+
+        activeDocuments = docsArray;
             renderActiveDocuments();
 
-            console.log('Loaded PDFs:', activeDocuments);
+        console.log('Loaded PDFs:', activeDocuments);
             const pdfList = document.getElementById('pdf-list');
             if (!pdfList) return;
 
-            if (!activeDocuments.length) {
+        if (!activeDocuments.length) {
                 pdfList.innerHTML = '<p class="empty-pdfs">No documents uploaded yet.</p>';
             } else {
                 let html = '';
