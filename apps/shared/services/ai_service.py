@@ -30,13 +30,13 @@ class AIService:
             client_kwargs["base_url"] = self.base_url
 
         try:
-            self.llm_client = InferenceClient(model=self.model, **client_kwargs)
+            self.llm_client = InferenceClient(**client_kwargs)
         except Exception as exc:
             logger.exception("Failed to initialise Hugging Face client for model %s: %s", self.model, exc)
             self.llm_client = None
 
         try:
-            self.embedding_client = InferenceClient(model=self.embedding_model, **client_kwargs)
+            self.embedding_client = InferenceClient(**client_kwargs)
         except Exception as exc:
             logger.exception(
                 "Failed to initialise Hugging Face client for embedding model %s: %s",
@@ -60,7 +60,12 @@ class AIService:
 
         try:
             if hasattr(self.llm_client, "chat_completion"):
-                response = self.llm_client.chat_completion(messages=messages, max_tokens=900, temperature=0.4)
+                response = self.llm_client.chat_completion(
+                    model=self.model,
+                    messages=messages,
+                    max_tokens=900,
+                    temperature=0.4,
+                )
                 choices = getattr(response, "choices", None)
                 if choices:
                     content = choices[0].message.get("content", "")
