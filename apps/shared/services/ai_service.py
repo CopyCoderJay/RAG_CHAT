@@ -66,7 +66,6 @@ class AIService:
         try:
             if hasattr(self.llm_client, "chat_completion"):
                 response = self.llm_client.chat_completion(
-                    model=self.model,
                     messages=messages,
                     max_tokens=900,
                     temperature=0.4,
