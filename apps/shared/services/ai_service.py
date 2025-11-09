@@ -17,6 +17,11 @@ class AIService:
             settings, "EMBEDDING_MODEL", "sentence-transformers/all-mpnet-base-v2"
         )
         self.timeout: int = getattr(settings, "HF_TIMEOUT", 90)
+        self.api_url: str = getattr(
+            settings,
+            "HF_API_URL",
+            "https://router.huggingface.co/hf-inference",
+        )
 
         if not self.hf_token:
             logger.warning(
@@ -30,6 +35,7 @@ class AIService:
             self.llm_client = InferenceClient(
                 model=self.model,
                 token=self.hf_token,
+                api_url=self.api_url,
                 timeout=self.timeout,
             )
         except Exception as exc:
@@ -40,6 +46,7 @@ class AIService:
             self.embedding_client = InferenceClient(
                 model=self.embedding_model,
                 token=self.hf_token,
+                api_url=self.api_url,
                 timeout=self.timeout,
             )
         except Exception as exc:
