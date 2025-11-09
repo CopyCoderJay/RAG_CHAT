@@ -655,8 +655,8 @@ body.sidebar-collapsed .sidebar-show-btn {
 }
 
 .chat-title-section h1 {
-    font-size: 24px;
-    font-weight: 550;
+    font-size: 20px;
+    font-weight: 500;
     color: var(--text-primary);
     margin: 0;
 }
