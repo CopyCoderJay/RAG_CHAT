@@ -214,12 +214,19 @@
             
             <div class="input-container">
                 <div class="input-wrapper">
-                    <textarea id="message-input" placeholder="Message RAG Chat Assistant..." rows="1" disabled></textarea>
-                    <button class="send-btn" id="send-btn" onclick="sendMessage()" disabled>
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                            <path d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 8l-2.147 2.146a.5.5 0 0 0 .708.708l3-3zM0.5 8.5H15v-1H0.5v1z" fill="currentColor"/>
-                        </svg>
-                    </button>
+                    <textarea id="message-input" placeholder="Ask anything..." rows="1" disabled></textarea>
+                    <div class="composer-actions">
+                        <button class="composer-button upload-inline-btn" id="upload-inline-btn" onclick="uploadPDF()" title="Upload PDF" disabled>
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M3 13.5V5.75C3 5.33579 3.33579 5 3.75 5H7V6.5H4.5V13.5H11.5V6.5H9V5H12.25C12.6642 5 13 5.33579 13 5.75V13.5C13 13.9142 12.6642 14.25 12.25 14.25H3.75C3.33579 14.25 3 13.9142 3 13.5ZM7.75 8V2.75C7.75 2.33579 8.08579 2 8.5 2C8.91421 2 9.25 2.33579 9.25 2.75V8H11L8.5 10.5L6 8H7.75Z" fill="currentColor"/>
+                            </svg>
+                        </button>
+                        <button class="composer-button send-btn" id="send-btn" onclick="sendMessage()" title="Send message" disabled>
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 8l-2.147 2.146a.5.5 0 0 0 .708.708l3-3zM0.5 8.5H15v-1H0.5v1z" fill="currentColor"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -350,6 +357,27 @@ const uploadProgress = (() => {
     };
 })();
 
+function setComposerEnabled(enabled) {
+    const messageInput = document.getElementById('message-input');
+    const sendBtn = document.getElementById('send-btn');
+    const uploadInlineBtn = document.getElementById('upload-inline-btn');
+
+    [messageInput, sendBtn, uploadInlineBtn].forEach(el => {
+        if (el) {
+            el.disabled = !enabled;
+        }
+    });
+
+    if (!enabled) {
+        if (messageInput) {
+            messageInput.value = '';
+            messageInput.style.height = '52px';
+        }
+    } else if (messageInput) {
+        autoResizeMessageInput();
+    }
+}
+
 function ensureActiveChat() {
     if (currentChatId) {
         return Promise.resolve(currentChatId);
@@ -399,7 +427,7 @@ function renderActiveDocuments() {
     const summaryEl = document.getElementById('upload-summary');
     if (summaryEl) {
         if (!activeDocuments.length) {
-            summaryEl.textContent = 'No PDFs attached';
+            summaryEl.textContent = 'No PDFs attached yet';
         } else if (activeDocuments.length === 1) {
             summaryEl.textContent = '1 PDF attached';
         } else {
@@ -621,8 +649,7 @@ function createNewChat() {
     if (uploadContainer) {
         uploadContainer.classList.toggle('collapsed', !uploadSectionExpanded);
     }
-        document.getElementById('message-input').disabled = false;
-        document.getElementById('send-btn').disabled = false;
+        setComposerEnabled(true);
         // Hide welcome screen
         const welcomeScreen = document.getElementById('welcome-screen');
         if (welcomeScreen) {
@@ -635,7 +662,11 @@ function createNewChat() {
         // Show PDF upload section only if RAG is enabled
         const ragCheckbox = document.getElementById('use-rag');
         if (ragCheckbox.checked) {
-            document.getElementById('uploaded-pdfs').style.display = 'block';
+            const pdfSection = document.getElementById('uploaded-pdfs');
+            if (pdfSection) {
+                pdfSection.style.display = 'block';
+                pdfSection.classList.toggle('collapsed', !uploadSectionExpanded);
+            }
         } else {
             document.getElementById('uploaded-pdfs').style.display = 'none';
         }
@@ -655,12 +686,12 @@ function createNewChat() {
                 </div>
             `;
             // Update input placeholder for new chat
-            document.getElementById('message-input').placeholder = 'Ask anything';
+            document.getElementById('message-input').placeholder = 'Ask anything...';
             // Add class to body for styling
             document.body.classList.add('new-chat-empty');
         } else {
             // Update input placeholder for existing chat
-            document.getElementById('message-input').placeholder = 'Message RAG Chat Assistant...';
+            document.getElementById('message-input').placeholder = 'Ask anything...';
             // Remove new-chat-empty class to restore normal input positioning
             document.body.classList.remove('new-chat-empty');
             console.log('Displaying messages:', messages);
@@ -736,7 +767,7 @@ function addMessageToChat(role, content, sources = []) {
     if (newChatWelcome) {
         newChatWelcome.remove();
         // Update placeholder when first message is sent
-        document.getElementById('message-input').placeholder = 'Message RAG Chat Assistant...';
+        document.getElementById('message-input').placeholder = 'Ask anything...';
         // Remove class from body
         document.body.classList.remove('new-chat-empty');
     }
@@ -789,6 +820,10 @@ function addMessageToChat(role, content, sources = []) {
 
 function formatMessageContent(content) {
     let formatted = content;
+
+    if (!formatted.includes('\n')) {
+        formatted = formatted.replace(/([.!?])\s+(?=[A-Z])/g, '$1\n');
+    }
     
     // Convert markdown tables to HTML tables
     // Match tables with pipe separators and separator rows
@@ -878,14 +913,26 @@ function formatMessageContent(content) {
     // Wrap lists in ul tags
     formatted = formatted.replace(/(<li class="mb-1">.*<\/li>)/gs, '<ul class="list-unstyled ms-3">$1</ul>');
     
-    // Handle line breaks (but preserve table HTML)
-    formatted = formatted.split(/\n\n+/).map(para => {
-        // Don't process if it's already HTML (like tables)
-        if (para.trim().startsWith('<') || para.includes('<table>') || para.includes('<div class="markdown-table-wrapper">')) {
-            return para;
-        }
-        return para.replace(/\n/g, '<br>');
-    }).join('<br><br>');
+    // Handle paragraphs and line breaks (but preserve table/list HTML)
+    const blocks = formatted.split(/\n{2,}/);
+    formatted = blocks
+        .map(block => {
+            const trimmed = block.trim();
+            if (!trimmed) {
+                return '';
+            }
+            if (
+                trimmed.startsWith('<') ||
+                trimmed.includes('<table>') ||
+                trimmed.includes('<div class="markdown-table-wrapper">') ||
+                trimmed.startsWith('<ul')
+            ) {
+                return trimmed;
+            }
+            const withBreaks = trimmed.replace(/\n/g, '<br>');
+            return `<p>${withBreaks}</p>`;
+        })
+        .join('');
     
     return formatted;
 }
@@ -1943,6 +1990,7 @@ function loadUploadedPDFs(chatId, options = {}) {
 
     // Enhanced chat item click handler
     document.addEventListener('DOMContentLoaded', function() {
+        setComposerEnabled(false);
         // Prefill prompt/use_rag if coming from landing page
         try {
             const prefill = sessionStorage.getItem('prefill_prompt');
