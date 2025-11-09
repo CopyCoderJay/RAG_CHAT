@@ -15,7 +15,7 @@ class AIService:
         self.model: str = settings.MODEL
         self.embedding_model: str = getattr(settings, "EMBEDDING_MODEL", "sentence-transformers/all-mpnet-base-v2")
         self.timeout: int = getattr(settings, "HF_TIMEOUT", 90)
-        self.base_url: Optional[str] = getattr(settings, "HF_API_URL", "https://router.huggingface.co/hf-inference")
+        self.base_url: Optional[str] = getattr(settings, "HF_API_URL", "https://router.huggingface.co")
 
         if not self.hf_token:
             logger.warning(
