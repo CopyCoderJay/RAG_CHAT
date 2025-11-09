@@ -13,10 +13,9 @@ class AIService:
     def __init__(self):
         self.hf_token: Optional[str] = settings.HF_TOKEN
         self.model: str = settings.MODEL
-        self.embedding_model: str = getattr(
-            settings, "EMBEDDING_MODEL", "sentence-transformers/all-mpnet-base-v2"
-        )
+        self.embedding_model: str = getattr(settings, "EMBEDDING_MODEL", "sentence-transformers/all-mpnet-base-v2")
         self.timeout: int = getattr(settings, "HF_TIMEOUT", 90)
+        self.base_url: Optional[str] = getattr(settings, "HF_API_URL", None)
 
         if not self.hf_token:
             logger.warning(
@@ -26,20 +25,18 @@ class AIService:
             self.embedding_client = None
             return
 
+        client_kwargs = {"token": self.hf_token, "timeout": self.timeout}
+        if self.base_url:
+            client_kwargs["base_url"] = self.base_url
+
         try:
-            self.llm_client = InferenceClient(
-                token=self.hf_token,
-                timeout=self.timeout,
-            )
+            self.llm_client = InferenceClient(**client_kwargs)
         except Exception as exc:
             logger.exception("Failed to initialise Hugging Face client for model %s: %s", self.model, exc)
             self.llm_client = None
 
         try:
-            self.embedding_client = InferenceClient(
-                token=self.hf_token,
-                timeout=self.timeout,
-            )
+            self.embedding_client = InferenceClient(**client_kwargs)
         except Exception as exc:
             logger.exception(
                 "Failed to initialise Hugging Face client for embedding model %s: %s",
