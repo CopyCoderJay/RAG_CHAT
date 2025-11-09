@@ -28,7 +28,6 @@ class AIService:
 
         try:
             self.llm_client = InferenceClient(
-                model=self.model,
                 token=self.hf_token,
                 timeout=self.timeout,
             )
@@ -38,7 +37,6 @@ class AIService:
 
         try:
             self.embedding_client = InferenceClient(
-                model=self.embedding_model,
                 token=self.hf_token,
                 timeout=self.timeout,
             )
@@ -66,6 +64,7 @@ class AIService:
         try:
             if hasattr(self.llm_client, "chat_completion"):
                 response = self.llm_client.chat_completion(
+                    model=self.model,
                     messages=messages,
                     max_tokens=900,
                     temperature=0.4,
@@ -84,6 +83,7 @@ class AIService:
                 logger.debug("chat_completion unavailable; falling back to text_generation")
                 text = self.llm_client.text_generation(
                     prompt,
+                    model=self.model,
                     max_new_tokens=900,
                     temperature=0.4,
                 )
@@ -169,7 +169,7 @@ class AIService:
             return [0.0] * 768
 
         try:
-            embedding = self.embedding_client.feature_extraction(text)
+            embedding = self.embedding_client.feature_extraction(text, model=self.embedding_model)
             if isinstance(embedding, list):
                 # feature_extraction may return [vector] or [[vector]]
                 if embedding and isinstance(embedding[0], list):
