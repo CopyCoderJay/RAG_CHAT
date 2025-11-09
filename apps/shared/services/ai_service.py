@@ -15,7 +15,7 @@ class AIService:
         self.model: str = settings.MODEL
         self.embedding_model: str = getattr(settings, "EMBEDDING_MODEL", "sentence-transformers/all-mpnet-base-v2")
         self.timeout: int = getattr(settings, "HF_TIMEOUT", 90)
-        self.base_url: Optional[str] = getattr(settings, "HF_API_URL", None)
+        self.api_url: Optional[str] = getattr(settings, "HF_API_URL", None)
 
         if not self.hf_token:
             logger.warning(
@@ -26,8 +26,8 @@ class AIService:
             return
 
         client_kwargs = {"token": self.hf_token, "timeout": self.timeout}
-        if self.base_url:
-            client_kwargs["base_url"] = self.base_url
+        if self.api_url:
+            client_kwargs["api_url"] = self.api_url
 
         try:
             self.llm_client = InferenceClient(model=self.model, **client_kwargs)
@@ -60,12 +60,7 @@ class AIService:
 
         try:
             if hasattr(self.llm_client, "chat_completion"):
-                response = self.llm_client.chat_completion(
-                    model=self.model,
-                    messages=messages,
-                    max_tokens=900,
-                    temperature=0.4,
-                )
+                response = self.llm_client.chat_completion(messages=messages, max_tokens=900, temperature=0.4)
                 choices = getattr(response, "choices", None)
                 if choices:
                     content = choices[0].message.get("content", "")
@@ -78,12 +73,7 @@ class AIService:
                 # Fallback for older client versions: build a single prompt and call text_generation.
                 prompt = self._messages_to_prompt(messages)
                 logger.debug("chat_completion unavailable; falling back to text_generation")
-                text = self.llm_client.text_generation(
-                    prompt,
-                    model=self.model,
-                    max_new_tokens=900,
-                    temperature=0.4,
-                )
+                text = self.llm_client.text_generation(prompt, model=self.model, max_new_tokens=900, temperature=0.4)
                 if text:
                     return text.strip()
         except Exception as exc:
