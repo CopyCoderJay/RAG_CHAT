@@ -11,163 +11,328 @@
       radial-gradient(120% 120% at 100% 0%, rgba(37, 99, 235, 0.25) 0%, rgba(8, 11, 23, 0) 60%);
     color: var(--text-primary);
   }
-  .landing-wrap { min-height: 100vh; padding: 48px 0 160px; display:flex; flex-direction:column; align-items:center; gap: 32px; }
-  .landing-title { font-size: clamp(34px, 5vw, 60px); font-weight: 700; color: var(--text-primary); margin: 40px 0 12px 0; text-align:center; }
-  .composer { position: fixed; left:50%; transform: translateX(-50%); bottom: 24px; width: min(1100px, 92vw); }
-  .landing-bar {
-    width: 100%;
-    background: linear-gradient(160deg, rgba(17, 24, 39, 0.92), rgba(17, 24, 39, 0.78));
+
+  .landing-wrap {
+    min-height: 100vh;
+    padding: 56px 24px 120px;
+    display: flex;
+    flex-direction: column;
+    gap: 72px;
+  }
+
+  .hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 20px;
+  }
+
+  .hero-title {
+    font-size: clamp(40px, 5vw, 64px);
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+  }
+
+  .hero-subtitle {
+    max-width: 680px;
+    font-size: 18px;
+    line-height: 1.6;
+    color: rgba(226, 232, 240, 0.85);
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 8px;
+  }
+
+  .cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 26px;
+    border-radius: 999px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-size: 15px;
+  }
+
+  .cta-primary {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.95), rgba(30, 64, 175, 0.95));
+    border: 1px solid rgba(59, 130, 246, 0.6);
+    color: #f8fafc;
+    box-shadow: 0 18px 34px rgba(30, 64, 175, 0.35);
+  }
+
+  .cta-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 22px 38px rgba(30, 64, 175, 0.4);
+  }
+
+  .cta-secondary {
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    color: var(--text-primary);
+  }
+
+  .cta-secondary:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+  }
+
+  .metrics {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+
+  .metric-card {
+    min-width: 220px;
+    padding: 20px 26px;
+    border-radius: 20px;
     border: 1px solid rgba(148, 163, 184, 0.18);
-    border-radius: 28px;
-    padding: 20px 22px 18px;
-    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.35);
-    position: relative;
+    background: rgba(15, 23, 42, 0.7);
+    box-shadow: 0 18px 30px rgba(15, 23, 42, 0.35);
     backdrop-filter: blur(16px);
   }
-  .landing-input-row { display:flex; align-items:center; gap:16px; justify-content:space-between; }
-  .landing-input { flex: 1; background: rgba(8, 11, 23, 0.35); border: 1px solid rgba(148, 163, 184, 0.18); border-radius: 14px; outline: none; color: var(--text-primary); font-size: 17px; padding: 16px 18px; transition: border-color .2s ease, box-shadow .2s ease; }
-  .landing-input:focus { border-color: var(--accent-primary); box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25); }
-  /* RAG toggle */
-  .rag-toggle { display:flex; align-items:center; gap:10px; color:var(--text-primary); margin-left:12px; }
-  .rag-switch { position: relative; width: 48px; height: 26px; background:rgba(15, 23, 42, 0.75); border:1px solid rgba(148, 163, 184, 0.25); border-radius: 9999px; cursor:pointer; transition: all .2s ease; }
-  .rag-switch::after { content:''; position:absolute; top:3px; left:3px; width:20px; height:20px; background:#9ca3af; border-radius:9999px; transition: all .2s ease; box-shadow:0 4px 10px rgba(15, 23, 42, 0.5); }
-  #guest-rag:checked + .rag-switch { background: linear-gradient(90deg, var(--grad-start), var(--grad-end)); border-color: transparent; }
-  #guest-rag:checked + .rag-switch::after { left:25px; background:#fff; }
-  /* Remove placeholder badges; enable Grammarly compatibility */
-  .chip-row { display:flex; align-items:center; gap:14px; margin-top: 16px; }
-  .chip {
-    display:flex;
-    align-items:center;
-    gap:10px;
-    color:#f1f5f9;
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.9), rgba(30, 64, 175, 0.9));
-    border:1px solid rgba(59, 130, 246, 0.5);
-    padding:10px 18px;
-    border-radius: 999px;
-    font-weight:600;
-    font-size:14px;
-    cursor:pointer;
-    outline:none;
-    transition: all .2s ease;
+
+  .metric-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent-primary);
   }
-  .chip:hover { filter: brightness(1.05); box-shadow: 0 10px 22px rgba(30, 64, 175, 0.25); }
-  .chip:active { transform: translateY(1px); }
-  .btn-login { background: linear-gradient(135deg, rgba(37, 99, 235, 0.95), rgba(30, 64, 175, 0.95)); color:#fff; padding:10px 16px; border-radius:10px; text-decoration:none; font-weight:600; box-shadow:0 10px 24px rgba(30, 64, 175, 0.25); }
-  .btn-signup { background: rgba(15, 23, 42, 0.75); color:var(--text-primary); border:1px solid rgba(148, 163, 184, 0.35); padding:10px 16px; border-radius:10px; text-decoration:none; font-weight:600; }
-  .btn-signup:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
-  .landing-hint { margin-top: 12px; color:#cbd5f5; font-size: 14px; opacity: 0.85; }
-  .guest-messages { width:min(1100px,92vw); margin:16px auto 0; display:flex; flex-direction:column; gap:10px; padding-bottom:140px; }
-  .guest-msg { color:#f1f5f9; background:rgba(17, 24, 39, 0.6); border:1px solid rgba(148, 163, 184, 0.12); padding:16px 18px; border-radius:18px; max-width:70%; font-size:17px; line-height:1.6; backdrop-filter: blur(8px); }
-  .guest-msg.user { align-self:flex-end; background:transparent; }
+
+  .metric-label {
+    margin-top: 8px;
+    font-size: 14px;
+    color: rgba(226, 232, 240, 0.75);
+  }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 24px;
+    width: min(1080px, 100%);
+    margin: 0 auto;
+  }
+
+  .feature-card {
+    padding: 24px;
+    border-radius: 20px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: rgba(15, 23, 42, 0.8);
+    box-shadow: 0 18px 32px rgba(15, 23, 42, 0.35);
+  }
+
+  .feature-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.9), rgba(30, 64, 175, 0.9));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+
+  .feature-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+
+  .feature-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: rgba(226, 232, 240, 0.75);
+  }
+
+  .workflow {
+    width: min(960px, 100%);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+  }
+
+  .step-card {
+    padding: 20px 22px;
+    border-radius: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: rgba(8, 11, 23, 0.75);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .step-index {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: rgba(37, 99, 235, 0.2);
+    color: var(--accent-primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .cta-banner {
+    width: min(980px, 100%);
+    margin: 0 auto;
+    padding: 28px 32px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.9), rgba(30, 64, 175, 0.9));
+    color: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    align-items: center;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(30, 64, 175, 0.35);
+  }
+
+  .cta-banner p {
+    margin: 0;
+    max-width: 640px;
+    line-height: 1.6;
+  }
+
+  .cta-banner .cta-btn {
+    background: #0f172a;
+    border: none;
+    color: #f8fafc;
+    box-shadow: none;
+  }
+
+  .landing-footer {
+    margin-top: auto;
+    text-align: center;
+    color: rgba(203, 213, 225, 0.7);
+    font-size: 13px;
+  }
+
+  @media (max-width: 640px) {
+    .hero-actions {
+      width: 100%;
+      flex-direction: column;
+    }
+
+    .cta-btn {
+      justify-content: center;
+      width: 100%;
+    }
+
+    .metrics {
+      gap: 16px;
+    }
+
+    .landing-wrap {
+      gap: 56px;
+    }
+  }
 </style>
 
 <div class="landing-wrap">
-  <h1 class="landing-title">Ready when you are.</h1>
-  <div class="composer">
-  <div class="landing-bar">
-    <div class="landing-input-row">
-      <textarea class="landing-input" placeholder="Ask anything" rows="1" spellcheck="true" data-gramm="true" data-gramm_editor="true" style="resize:none; overflow:hidden;"></textarea>
-      <div class="rag-toggle">
-        <span style="font-size:14px; opacity:.9;">Use RAG</span>
-        <label style="display:flex; align-items:center; cursor:pointer;">
-          <input type="checkbox" id="guest-rag" style="display:none;">
-          <span class="rag-switch"></span>
-        </label>
-      </div>
+  <section class="hero">
+    <h1 class="hero-title">Ready when you are.</h1>
+    <p class="hero-subtitle">
+      Craft grounded answers, brief your team, and analyse long-form documents without leaving the browser.
+      Sign in to connect your PDFs, Pinecone index, and Hugging Face models in seconds.
+    </p>
+    <div class="hero-actions">
+      <a href="/accounts/signup/" class="cta-btn cta-primary">Start for free</a>
+      <a href="/accounts/login/" class="cta-btn cta-secondary">Log in</a>
     </div>
-    <div class="chip-row">
-      <button type="button" class="chip" id="chip-attach">📎 Attach</button>
-      <button type="button" class="chip" id="chip-search">🌐 Search</button>
-      <button type="button" class="chip" id="chip-study">📖 Study</button>
-      <button type="button" class="chip" id="chip-voice" style="margin-left:auto;">🎙️ Voice</button>
-    </div>
-    <input type="file" id="guest-file-input" accept=".pdf,.png,.jpg,.jpeg" multiple style="display:none;" />
-    <div id="guest-files-list" class="files-note"></div>
-  </div>
-  <div style="text-align:center; margin-top:8px; color:#9ba3af; font-size:12px;">RAG Chat Assistant can make mistakes. Check important info.</div>
-  </div>
-  <div id="guest-messages" class="guest-messages"></div>
+  </section>
 
-  
+  <section class="metrics">
+    <div class="metric-card">
+      <div class="metric-value">10x</div>
+      <div class="metric-label">Faster answers with retrieval-augmented prompting</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value">99.9%</div>
+      <div class="metric-label">Vector search availability powered by Pinecone</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-value">60s</div>
+      <div class="metric-label">From upload to chat-ready document summaries</div>
+    </div>
+  </section>
+
+  <section class="feature-grid">
+    <div class="feature-card">
+      <div class="feature-icon">📄</div>
+      <div class="feature-title">Document-first interface</div>
+      <p class="feature-text">
+        Upload PDFs and keep them visible throughout the conversation. Ask follow-up questions
+        without losing context—the document stays pinned until you swap it out.
+      </p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🧠</div>
+      <div class="feature-title">Hugging Face native</div>
+      <p class="feature-text">
+        Ship with any inference endpoint or hosted model. We handle the router updates, timeouts,
+        and structured responses for both chat completions and embeddings.
+      </p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔐</div>
+      <div class="feature-title">Production confidence</div>
+      <p class="feature-text">
+        Django, DRF, and PostgreSQL on the backend—ready for Railway or Docker deployments with
+        structured logging, caching, and static asset pipelines.
+      </p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔍</div>
+      <div class="feature-title">Explainable answers</div>
+      <p class="feature-text">
+        Responses are emitted with paragraph grouping, inline citations, and an audit trail of the
+        chunks used. Copy the reasoning or export the sources with a single click.
+      </p>
+    </div>
+  </section>
+
+  <section class="workflow">
+    <div class="step-card">
+      <span class="step-index">1</span>
+      <h4>Upload</h4>
+      <p class="feature-text">Drop in a proposal, schedule, SOP, or contract. We handle chunking, embedding, and indexing automatically.</p>
+    </div>
+    <div class="step-card">
+      <span class="step-index">2</span>
+      <h4>Chat</h4>
+      <p class="feature-text">Ask follow-up questions in plain language. Responses stay concise with numbered paragraphs and source context.</p>
+    </div>
+    <div class="step-card">
+      <span class="step-index">3</span>
+      <h4>Share</h4>
+      <p class="feature-text">Invite teammates, export summaries, or deploy to your preferred hosting provider—all configuration lives in .env files.</p>
+    </div>
+  </section>
+
+  <section class="cta-banner">
+    <h2 style="margin:0; font-size: 26px;">Build your next RAG workflow in minutes.</h2>
+    <p>Join teams shipping production-grade assistants on top of Pinecone and Hugging Face. No proprietary lock-in—just open tooling and a polished experience.</p>
+    <a href="/accounts/signup/" class="cta-btn">Create a free account</a>
+  </section>
+
+  <footer class="landing-footer">
+    © {{ now|date:"Y" }} RAG Chat Assistant. Crafted with Django, LangChain, and Pinecone.
+  </footer>
 </div>
-<script>
-  (function(){
-    const input = document.querySelector('.landing-input');
-    const fileInput = document.getElementById('guest-file-input');
-    const ragToggle = document.getElementById('guest-rag');
-    const filesList = document.getElementById('guest-files-list');
-    const messagesEl = document.getElementById('guest-messages');
-
-    async function ensureGuestChatId(){
-      let id = sessionStorage.getItem('guest_chat_id');
-      if (id) return id;
-      const res = await fetch('/api/chat/create/', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({title:'Guest Chat'})});
-      const data = await res.json();
-      id = data.id;
-      sessionStorage.setItem('guest_chat_id', id);
-      return id;
-    }
-
-    function appendMessage(role, content){
-      const div = document.createElement('div');
-      div.className = 'guest-msg ' + (role === 'user' ? 'user' : 'assistant');
-      div.textContent = content;
-      messagesEl.appendChild(div);
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-    }
-
-    // Attach: open file picker (guest preview only)
-    document.getElementById('chip-attach').onclick = () => { ragToggle.checked = true; fileInput.click(); };
-    fileInput.onchange = () => {
-      if (!fileInput.files || fileInput.files.length === 0) return;
-      const names = Array.from(fileInput.files).map(f => f.name).join(', ');
-      if (!names) return;
-      filesList.textContent = `Selected: ${names}. Log in to upload and use RAG.`;
-    };
-
-    // Search: open Google in new tab using current input
-    document.getElementById('chip-search').onclick = () => {
-      const q = (input.value || '').trim();
-      if (!q) { input.focus(); return; }
-      window.open(`https://www.google.com/search?q=${encodeURIComponent(q)}`,'_blank');
-    };
-
-    // Study: open Wikipedia search/new tab
-    document.getElementById('chip-study').onclick = () => {
-      const q = (input.value || '').trim();
-      const url = q ? `https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(q)}` : 'https://en.wikipedia.org/';
-      window.open(url, '_blank');
-    };
-
-    // Voice: fill input using Web Speech API
-    document.getElementById('chip-voice').onclick = async () => {
-      try {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) { alert('Voice not supported in this browser'); return; }
-        const r = new SpeechRecognition();
-        r.lang = 'en-US';
-        r.onresult = (e) => { const txt = e.results[0][0].transcript; input.value = txt; input.focus(); };
-        r.start();
-      } catch (e) { console.error(e); }
-    };
-    // On Enter send as guest using session-bound chat
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        const q = (input.value || '').trim();
-        if (!q) return;
-        (async () => {
-          const chatId = await ensureGuestChatId();
-          appendMessage('user', q);
-          input.value='';
-          const res = await fetch('/api/chat/send-message/', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({chat_id: chatId, message: q, use_rag: ragToggle.checked})});
-          const data = await res.json();
-          if (data && data.response) appendMessage('assistant', data.response); else appendMessage('assistant', data.error || 'Error retrieving response');
-        })();
-      }
-    });
-  })();
-</script>
 {% endblock %}
 
 
