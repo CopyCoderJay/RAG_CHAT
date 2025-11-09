@@ -152,33 +152,43 @@
         <div class="chat-content">
             <!-- Uploaded PDFs Section with Drag & Drop -->
             <div id="uploaded-pdfs" class="upload-pdf-container" style="display: none;">
-                <p class="upload-pdf-label">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-right: 8px;">
-                        <path d="M13.5 0h-11A1.5 1.5 0 0 0 1 1.5v13A1.5 1.5 0 0 0 2.5 16h11a1.5 1.5 0 0 0 1.5-1.5v-13A1.5 1.5 0 0 0 13.5 0zM3 4h10v1H3V4zm0 3h10v1H3V7zm0 3h7v1H3v-1z" fill="currentColor"/>
-                    </svg>
-                    Upload PDF(s)
-                </p>
-                <div class="drag-drop-area" id="drag-drop-area">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                        <path d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2ZM12 4C16.4183 4 20 7.58172 20 12C20 16.4183 16.4183 20 12 20C7.58172 20 4 16.4183 4 12C4 7.58172 7.58172 4 12 4ZM11 10V7H13V10H16L12 14L8 10H11Z" fill="#3b82f6"/>
-                    </svg>
-                    <div class="drag-drop-content">
-                        <p class="drag-drop-text">Drag and drop files here</p>
-                        <p class="drag-drop-limit">Limit 200MB per file • PDF</p>
+                <div class="upload-pdf-header">
+                    <div class="upload-pdf-label">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M13.5 0h-11A1.5 1.5 0 0 0 1 1.5v13A1.5 1.5 0 0 0 2.5 16h11a1.5 1.5 0 0 0 1.5-1.5v-13A1.5 1.5 0 0 0 13.5 0zM3 4h10v1H3V4zm0 3h10v1H3V7zm0 3h7v1H3v-1z" fill="currentColor"/>
+                        </svg>
+                        <span>Upload PDF(s)</span>
+                        <span id="upload-summary" class="upload-summary">No PDFs attached</span>
                     </div>
-                    <button class="browse-files-btn" onclick="document.getElementById('pdf-upload-input').click()">Browse files</button>
-                    <input type="file" id="pdf-upload-input" accept=".pdf" multiple style="display: none;">
+                    <button type="button" class="upload-toggle-btn" id="upload-toggle-btn" onclick="toggleUploadSection()">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path id="upload-toggle-icon" d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
                 </div>
-                
-                <!-- Dynamically added uploaded files will go here -->
-                <div id="uploaded-files-list"></div>
+                <div class="upload-pdf-body" id="upload-pdf-body">
+                    <div class="drag-drop-area" id="drag-drop-area">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2ZM12 4C16.4183 4 20 7.58172 20 12C20 16.4183 16.4183 20 12 20C7.58172 20 4 16.4183 4 12C4 7.58172 7.58172 4 12 4ZM11 10V7H13V10H16L12 14L8 10H11Z" fill="#3b82f6"/>
+                        </svg>
+                        <div class="drag-drop-content">
+                            <p class="drag-drop-text">Drag and drop files here</p>
+                            <p class="drag-drop-limit">Limit 200MB per file • PDF</p>
+                        </div>
+                        <button class="browse-files-btn" onclick="document.getElementById('pdf-upload-input').click()">Browse files</button>
+                        <input type="file" id="pdf-upload-input" accept=".pdf" multiple style="display: none;">
+                    </div>
+                    
+                    <!-- Dynamically added uploaded files will go here -->
+                    <div id="uploaded-files-list"></div>
 
-                <!-- PDF Upload Success Message -->
-                <div id="pdf-upload-success" class="pdf-upload-success-message" style="display: none;">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path d="M8 1C4.13401 1 1 4.13401 1 8C1 11.866 4.13401 15 8 15C11.866 15 15 11.866 15 8C15 4.13401 11.866 1 8 1ZM7.00001 11.5L4.5 9L5.5 8L7.00001 9.5L10.5 6L11.5 7L7.00001 11.5Z" fill="#166534"/>
-                    </svg>
-                    <span>PDF uploaded successfully</span>
+                    <!-- PDF Upload Success Message -->
+                    <div id="pdf-upload-success" class="pdf-upload-success-message" style="display: none;">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M8 1C4.13401 1 1 4.13401 1 8C1 11.866 4.13401 15 8 15C11.866 15 15 11.866 15 8C15 4.13401 11.866 1 8 1ZM7.00001 11.5L4.5 9L5.5 8L7.00001 9.5L10.5 6L11.5 7L7.00001 11.5Z" fill="#166534"/>
+                        </svg>
+                        <span>PDF uploaded successfully</span>
+                    </div>
                 </div>
             </div>
             
@@ -262,6 +272,7 @@
 let currentChatId = null;
 let activeDocuments = [];
 let pendingAttachmentDocs = [];
+let uploadSectionExpanded = false;
 
 const uploadProgress = (() => {
     const wrapper = document.getElementById('upload-progress');
@@ -363,6 +374,7 @@ function ensureRAGSectionVisible() {
     }
     if (pdfsSection) {
         pdfsSection.style.display = 'block';
+        pdfsSection.classList.toggle('collapsed', !uploadSectionExpanded);
     }
 }
 
@@ -392,6 +404,26 @@ function renderActiveDocuments() {
                 .join('');
         }
     }
+
+    const summaryEl = document.getElementById('upload-summary');
+    if (summaryEl) {
+        if (!activeDocuments.length) {
+            summaryEl.textContent = 'No PDFs attached';
+        } else if (activeDocuments.length === 1) {
+            summaryEl.textContent = '1 PDF attached';
+        } else {
+            summaryEl.textContent = `${activeDocuments.length} PDFs attached`;
+        }
+    }
+}
+
+function toggleUploadSection() {
+    const container = document.getElementById('uploaded-pdfs');
+    if (!container) {
+        return;
+    }
+    uploadSectionExpanded = !uploadSectionExpanded;
+    container.classList.toggle('collapsed', !uploadSectionExpanded);
 }
 
 function uploadFileWithProgress(file) {
@@ -594,6 +626,10 @@ function createNewChat() {
     pendingAttachmentDocs = [];
     activeDocuments = [];
     renderActiveDocuments();
+    const uploadContainer = document.getElementById('uploaded-pdfs');
+    if (uploadContainer) {
+        uploadContainer.classList.toggle('collapsed', !uploadSectionExpanded);
+    }
         document.getElementById('chat-title').textContent = 'RAG Chat Assistant';
         document.getElementById('message-input').disabled = false;
         document.getElementById('send-btn').disabled = false;
@@ -1951,7 +1987,10 @@ function loadUploadedPDFs(chatId, options = {}) {
         const ragCheckbox = document.getElementById('use-rag');
         const pdfsSection = document.getElementById('uploaded-pdfs');
         
-        pdfsSection.style.display = 'none';
+        if (pdfsSection) {
+            pdfsSection.style.display = 'none';
+            pdfsSection.classList.add('collapsed');
+        }
 
         // Hook up file input and drag & drop for PDF uploads
         const fileInput = document.getElementById('pdf-upload-input');
@@ -1986,19 +2025,22 @@ function loadUploadedPDFs(chatId, options = {}) {
             });
         }
         
-        ragCheckbox.addEventListener('change', function() {
-            if (this.checked) {
-                // RAG enabled - show PDF upload section
-                if (currentChatId) {
-                    pdfsSection.style.display = 'block';
+        if (ragCheckbox && pdfsSection) {
+            ragCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    // RAG enabled - show PDF upload section
+                    if (currentChatId) {
+                        pdfsSection.style.display = 'block';
+                        pdfsSection.classList.toggle('collapsed', !uploadSectionExpanded);
+                    }
+                    document.body.classList.add('rag-on');
+                } else {
+                    // RAG disabled - hide PDF upload section
+                    pdfsSection.style.display = 'none';
+                    document.body.classList.remove('rag-on');
                 }
-                document.body.classList.add('rag-on');
-            } else {
-                // RAG disabled - hide PDF upload section
-                pdfsSection.style.display = 'none';
-                document.body.classList.remove('rag-on');
-            }
-        });
+            });
+        }
         
         // Add search functionality
         const searchInput = document.getElementById('chat-search');

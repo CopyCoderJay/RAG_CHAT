@@ -655,14 +655,14 @@ body.sidebar-collapsed .sidebar-show-btn {
 }
 
 .chat-title-section h1 {
-    font-size: 30px;
-    font-weight: 600;
+    font-size: 24px;
+    font-weight: 550;
     color: var(--text-primary);
     margin: 0;
 }
 
 .chat-tagline {
-    font-size: 14px;
+    font-size: 12px;
     color: rgba(255, 255, 255, 0.85);
     margin: 0;
     font-weight: 400;
@@ -962,16 +962,68 @@ body.new-chat-empty.chat-active .input-wrapper {
     box-shadow: 0 18px 42px rgba(15, 23, 42, 0.32);
 }
 
+.upload-pdf-container.collapsed {
+    padding: 14px 18px;
+}
+
+.upload-pdf-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
 .upload-pdf-label {
     display: flex;
     align-items: center;
+    gap: 10px;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 12px;
-    font-size: 14px;
+    font-size: 13px;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    letter-spacing: 0.12em;
-    gap: 8px;
+}
+
+.upload-summary {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0;
+    color: var(--text-muted);
+    text-transform: none;
+    border-left: 1px solid rgba(148, 163, 184, 0.25);
+    padding-left: 8px;
+}
+
+.upload-toggle-btn {
+    background: rgba(148, 163, 184, 0.14);
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    color: var(--text-primary);
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.upload-toggle-btn:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+.upload-pdf-container.collapsed .upload-pdf-body {
+    display: none;
+}
+
+.upload-pdf-container .upload-toggle-btn svg {
+    transition: transform 0.2s ease;
+}
+
+.upload-pdf-container.collapsed .upload-toggle-btn svg {
+    transform: rotate(-90deg);
 }
 
 .drag-drop-area {
