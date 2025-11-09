@@ -159,6 +159,8 @@ PINECONE_API_KEY = os.getenv('PINECONE_API_KEY')
 PINECONE_INDEX_NAME = os.getenv('PINECONE_INDEX_NAME', 'rag-chat-index')
 HF_TOKEN = os.getenv('HF_TOKEN')
 MODEL = os.getenv('MODEL', 'openai/gpt-oss-20b')
+EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL', 'sentence-transformers/all-mpnet-base-v2')
+HF_TIMEOUT = int(os.getenv('HF_TIMEOUT', '90'))
 
 # CORS settings
 CORS_ALLOWED_ORIGINS = [

@@ -1,87 +1,105 @@
 import logging
 from typing import List, Optional, Sequence
 
-import requests
 from django.conf import settings
+from huggingface_hub import InferenceClient
 
 logger = logging.getLogger(__name__)
 
 
 class AIService:
-    """Service for AI interactions using the Hugging Face Router API."""
+    """Service for AI interactions using Hugging Face's InferenceClient."""
 
     def __init__(self):
         self.hf_token: Optional[str] = settings.HF_TOKEN
         self.model: str = settings.MODEL
+        self.embedding_model: str = getattr(
+            settings, "EMBEDDING_MODEL", "sentence-transformers/all-mpnet-base-v2"
+        )
         self.timeout: int = getattr(settings, "HF_TIMEOUT", 90)
-        self.base_url: str = getattr(
-            settings,
-            "HF_API_URL",
-            "https://router.huggingface.co/hf-inference",
-        ).rstrip("/")
-        self.chat_url: str = f"{self.base_url}/v1/chat/completions"
-        self.embedding_url: str = f"{self.base_url}/v1/embeddings"
 
-        self.session = requests.Session()
-        headers = {
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-        }
-        if self.hf_token:
-            headers["Authorization"] = f"Bearer {self.hf_token}"
-        else:
-            logger.warning("HF_TOKEN is not configured; responses will use fallback messaging.")
-        self.session.headers.update(headers)
-
-    # --------------------------------------------------------------------- #
-    # Chat completion
-    # --------------------------------------------------------------------- #
-    def generate_response(self, message: str, conversation_history: Optional[Sequence[dict]] = None) -> str:
-        """Generate an AI response, falling back to canned text on failure."""
         if not self.hf_token:
-            return self._generate_fallback_response(message, conversation_history)
-
-        payload = {
-            "model": self.model,
-            "messages": self._build_messages(message, conversation_history),
-            "max_tokens": 900,
-            "temperature": 0.4,
-        }
+            logger.warning(
+                "HF_TOKEN is not configured; the service will respond with fallback messaging."
+            )
+            self.llm_client = None
+            self.embedding_client = None
+            return
 
         try:
-            logger.debug("Sending chat completion request to Hugging Face router.")
-            response = self.session.post(self.chat_url, json=payload, timeout=self.timeout)
-            response.raise_for_status()
-            data = response.json()
-            choices = data.get("choices", [])
-            if not choices:
-                logger.warning("Chat completion response missing choices: %s", data)
-                return self._generate_fallback_response(message, conversation_history)
-
-            content = (
-                choices[0]
-                .get("message", {})
-                .get("content", "")
-            )
-            if not content:
-                logger.warning("Chat completion choice missing content: %s", choices[0])
-                return self._generate_fallback_response(message, conversation_history)
-
-            logger.debug("AI generated response length=%s", len(content))
-            return content.strip()
-
-        except requests.HTTPError as http_error:
-            logger.error(
-                "Hugging Face router returned HTTP error %s: %s",
-                http_error.response.status_code if http_error.response else "unknown",
-                http_error,
+            self.llm_client = InferenceClient(
+                model=self.model,
+                token=self.hf_token,
+                timeout=self.timeout,
             )
         except Exception as exc:
-            logger.exception("Unexpected error during chat completion: %s", exc)
+            logger.exception("Failed to initialise Hugging Face client for model %s: %s", self.model, exc)
+            self.llm_client = None
+
+        try:
+            self.embedding_client = InferenceClient(
+                model=self.embedding_model,
+                token=self.hf_token,
+                timeout=self.timeout,
+            )
+        except Exception as exc:
+            logger.exception(
+                "Failed to initialise Hugging Face client for embedding model %s: %s",
+                self.embedding_model,
+                exc,
+            )
+            self.embedding_client = None
+
+    # ------------------------------------------------------------------ #
+    # Chat completion
+    # ------------------------------------------------------------------ #
+    def generate_response(
+        self,
+        message: str,
+        conversation_history: Optional[Sequence[dict]] = None,
+    ) -> str:
+        if not self.llm_client:
+            return self._generate_fallback_response(message, conversation_history)
+
+        messages = self._build_messages(message, conversation_history)
+
+        try:
+            if hasattr(self.llm_client, "chat_completion"):
+                response = self.llm_client.chat_completion(
+                    model=self.model,
+                    messages=messages,
+                    max_tokens=900,
+                    temperature=0.4,
+                )
+                choices = getattr(response, "choices", None)
+                if choices:
+                    content = choices[0].message.get("content", "")
+                    if content:
+                        return content.strip()
+                    logger.warning("Chat completion returned empty content: %s", choices[0])
+                else:
+                    logger.warning("Chat completion returned no choices: %s", response)
+            else:
+                # Fallback for older client versions: build a single prompt and call text_generation.
+                prompt = self._messages_to_prompt(messages)
+                logger.debug("chat_completion unavailable; falling back to text_generation")
+                text = self.llm_client.text_generation(
+                    prompt,
+                    max_new_tokens=900,
+                    temperature=0.4,
+                )
+                if text:
+                    return text.strip()
+        except Exception as exc:
+            logger.exception("Error calling Hugging Face chat completion: %s", exc)
 
         return self._generate_fallback_response(message, conversation_history)
 
-    def _build_messages(self, current_message: str, conversation_history: Optional[Sequence[dict]]) -> List[dict]:
+    def _build_messages(
+        self,
+        current_message: str,
+        conversation_history: Optional[Sequence[dict]],
+    ) -> List[dict]:
         messages: List[dict] = [
             {
                 "role": "system",
@@ -99,11 +117,25 @@ class AIService:
         messages.append({"role": "user", "content": current_message})
         return messages
 
-    # --------------------------------------------------------------------- #
-    # Fallback responses
-    # --------------------------------------------------------------------- #
-    def _generate_fallback_response(self, message: str, conversation_history: Optional[Sequence[dict]]) -> str:
-        """Generate an informative fallback reply when we cannot reach the LLM."""
+    @staticmethod
+    def _messages_to_prompt(messages: Sequence[dict]) -> str:
+        """Serialize chat history into a text prompt for text_generation fallback."""
+        prompt_parts: List[str] = []
+        for msg in messages:
+            role = msg.get("role", "user").capitalize()
+            content = msg.get("content", "")
+            prompt_parts.append(f"{role}: {content}")
+        prompt_parts.append("Assistant:")
+        return "\n".join(prompt_parts)
+
+    # ------------------------------------------------------------------ #
+    # Fallback response
+    # ------------------------------------------------------------------ #
+    def _generate_fallback_response(
+        self,
+        message: str,
+        conversation_history: Optional[Sequence[dict]],
+    ) -> str:
         message_lower = message.lower()
 
         if any(word in message_lower for word in ["pdf", "document", "file", "upload"]):
@@ -126,41 +158,26 @@ class AIService:
             "Please retry in a moment, or provide any additional context you'd like me to consider."
         )
 
-    # --------------------------------------------------------------------- #
+    # ------------------------------------------------------------------ #
     # Embeddings
-    # --------------------------------------------------------------------- #
+    # ------------------------------------------------------------------ #
     def generate_embedding(self, text: str) -> List[float]:
-        """Generate embeddings using the Hugging Face router API."""
         if not text.strip():
             return [0.0] * 768
 
-        if not self.hf_token:
-            logger.warning("Embedding requested but HF token is missing. Returning zero vector.")
+        if not self.embedding_client:
+            logger.warning("Embedding client is unavailable. Returning a zero vector.")
             return [0.0] * 768
 
-        payload = {
-            "model": "sentence-transformers/all-mpnet-base-v2",
-            "input": text,
-        }
-
         try:
-            response = self.session.post(self.embedding_url, json=payload, timeout=self.timeout)
-            response.raise_for_status()
-            data = response.json()
-            embedding = (
-                data.get("data", [{}])[0]
-                .get("embedding")
-            )
-            if embedding:
+            embedding = self.embedding_client.feature_extraction(text)
+            if isinstance(embedding, list):
+                # feature_extraction may return [vector] or [[vector]]
+                if embedding and isinstance(embedding[0], list):
+                    return embedding[0]
                 return embedding
-        except requests.HTTPError as http_error:
-            logger.error(
-                "Embedding request failed with HTTP %s: %s",
-                http_error.response.status_code if http_error.response else "unknown",
-                http_error,
-            )
         except Exception as exc:
-            logger.exception("Unexpected error during embedding generation: %s", exc)
+            logger.exception("Error generating embedding via Hugging Face: %s", exc)
 
         logger.warning("Falling back to zero vector for embedding.")
         return [0.0] * 768
