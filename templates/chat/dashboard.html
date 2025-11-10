@@ -910,26 +910,22 @@ function formatMessageContent(content) {
     // Wrap lists in ul tags
     formatted = formatted.replace(/(<li class="mb-1">.*<\/li>)/gs, '<ul class="list-unstyled ms-3">$1</ul>');
     
-    // Handle paragraphs and line breaks (but preserve table/list HTML)
-    const blocks = formatted.split(/\n{2,}/);
-    formatted = blocks
-        .map(block => {
-            const trimmed = block.trim();
-            if (!trimmed) {
-                return '';
-            }
-            if (
-                trimmed.startsWith('<') ||
-                trimmed.includes('<table>') ||
-                trimmed.includes('<div class="markdown-table-wrapper">') ||
-                trimmed.startsWith('<ul')
-            ) {
-                return trimmed;
-            }
-            const withBreaks = trimmed.replace(/\n/g, '<br>');
+    const hasTableMarkup = formatted.includes('<table') || formatted.includes('<div class="markdown-table-wrapper">');
+    const hasListMarkup = /(^|\n)[*-]\s+/m.test(content) || formatted.includes('<ul') || formatted.includes('<ol');
+
+    if (!hasTableMarkup) {
+        formatted = formatted.replace(/\n{3,}/g, '\n\n').trim();
+
+        if (!formatted.includes('\n') && !hasListMarkup) {
+            formatted = formatted.replace(/([.!?])\s+(?=[A-Z0-9])/g, '$1\n');
+        }
+
+        const paragraphs = formatted.split(/\n{2,}/).map(block => block.trim()).filter(Boolean);
+        formatted = paragraphs.map((para) => {
+            const withBreaks = para.replace(/\n/g, '<br>');
             return `<p>${withBreaks}</p>`;
-        })
-        .join('');
+        }).join('');
+    }
     
     return formatted;
 }
