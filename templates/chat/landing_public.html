@@ -255,10 +255,14 @@
       Craft grounded answers, brief your team, and analyse long-form documents without leaving the browser.
       Sign in to connect your PDFs, Pinecone index, and Hugging Face models in seconds.
     </p>
-    <div class="hero-actions">
-      <a href="/accounts/signup/" class="cta-btn cta-primary">Start for free</a>
-      <a href="/accounts/login/" class="cta-btn cta-secondary">Log in</a>
-    </div>
+    {% if debug %}
+      <a href="/accounts/signup/" class="cta-btn cta-primary hero-actions">Sign up</a>
+    {% else %}
+      <div class="hero-actions">
+        <a href="/accounts/signup/" class="cta-btn cta-primary">Sign up</a>
+        <a href="/accounts/login/" class="cta-btn cta-secondary">Log in</a>
+      </div>
+    {% endif %}
   </section>
 
   <section class="metrics">
@@ -332,7 +336,14 @@
   <section class="cta-banner">
     <h2 style="margin:0; font-size: 26px;">Build your next RAG workflow in minutes.</h2>
     <p>Join teams shipping production-grade assistants on top of Pinecone and Hugging Face. No proprietary lock-in—just open tooling and a polished experience.</p>
-    <a href="/accounts/signup/" class="cta-btn">Create a free account</a>
+    {% if debug %}
+      <a href="/accounts/signup/" class="cta-btn">Create a free account</a>
+    {% else %}
+      <div class="hero-actions" style="gap:12px;">
+        <a href="/accounts/signup/" class="cta-btn">Create a free account</a>
+        <a href="/accounts/login/" class="cta-btn cta-secondary" style="background:transparent;border:1px solid rgba(255,255,255,0.35);color:#fff;">Log in</a>
+      </div>
+    {% endif %}
   </section>
 
   <footer class="landing-footer">
