@@ -1,7 +1,7 @@
 {% load static %}
 {
-  "name": "RAG Chat Assistant",
-  "short_name": "RAG Chat",
+  "name": "AtlasMind",
+  "short_name": "AtlasMind",
   "id": "/",
   "scope": "/",
   "start_url": "/",
