@@ -1966,7 +1966,8 @@ body:not(.chat-active) .input-container {
     }
     
     .message {
-        max-width: 85%;
+        width: 100%;
+        max-width: 100%;
     }
 
     /* Dock input at the bottom on mobile to keep it visible */
@@ -2000,14 +2001,53 @@ body:not(.chat-active) .input-container {
 
     .input-wrapper {
         margin: 0 auto;
-        width: calc(100% - 16px);
-        max-width: 720px;
-        gap: 10px;
+        width: 100%;
+        max-width: none;
+        gap: 8px;
+    }
+
+    .chat-content {
+        width: 100%;
+        padding: 16px 10px 16px;
+        border-radius: 18px;
+        box-shadow: none;
+    }
+
+    .messages-container {
+        padding: 10px 0 120px;
+        gap: 14px;
+    }
+
+    .message-bubble {
+        border-radius: 16px;
+        padding: 16px 18px;
+    }
+
+    .message-attachments {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    #message-input {
+        min-height: 46px;
+        height: 46px;
+        font-size: 15px;
+        padding: 13px 14px;
+    }
+
+    .composer-actions {
+        gap: 6px;
     }
 
     .composer-button {
         width: 36px;
         height: 36px;
+    }
+
+    .upload-pdf-container {
+        margin: 0 0 12px 0;
+        padding: 14px;
     }
 }
 
